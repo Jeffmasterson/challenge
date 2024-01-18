@@ -58,7 +58,3 @@ export default defineComponent({
   },
 });
 </script>
-
-<style>
-/* Add any additional CSS styling here */
-</style>
