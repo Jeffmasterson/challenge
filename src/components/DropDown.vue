@@ -20,34 +20,45 @@
 </template>
 
 <script>
-export default {
+import { ref, watch, defineComponent } from 'vue';
+
+export default defineComponent({
   props: {
     selectedCountry: String,
     selectedRegion: String,
     countryNames: Array,
     regionNames: Array,
   },
-  data() {
+  setup(props, { emit }) {
+    const localSelectedHome = ref(props.selectedCountry || '');
+    const localSelectedRegion = ref(props.selectedRegion || '');
+
+    const onCountryChange = () => {
+      emit('update:selectedCountry', localSelectedHome.value);
+    };
+
+    const onRegionChange = () => {
+      emit('update:selectedRegion', localSelectedRegion.value);
+    };
+
+    watch(() => props.selectedCountry, (newVal) => {
+      localSelectedHome.value = newVal;
+    });
+
+    watch(() => props.selectedRegion, (newVal) => {
+      localSelectedRegion.value = newVal;
+    });
+
     return {
-      localSelectedHome: this.selectedCountry || '',
-      localSelectedRegion: this.selectedRegion || '',
+      localSelectedHome,
+      localSelectedRegion,
+      onCountryChange,
+      onRegionChange
     };
   },
-  methods: {
-    onCountryChange() {
-      this.$emit('update:selectedCountry', this.localSelectedHome);
-    },
-    onRegionChange(region) {
-      this.$emit('update:selectedRegion', this.localSelectedRegion);
-    },
-  },
-  watch: {
-    selectedCountry(newVal) {
-      this.localSelectedHome = newVal;
-    },
-    selectedRegion(newVal) {
-      this.localSelectedRegion = newVal;
-    },
-  },
-};
+});
 </script>
+
+<style>
+/* Add any additional CSS styling here */
+</style>
