@@ -1,8 +1,8 @@
 <template>
-  <div class="flex border-2 rounded w-full lg:inline-flex lg:w-80">
+  <div className="flex border-2 rounded w-full lg:inline-flex lg:w-80">
     <input
         type="text"
-        class="px-4 py-2 w-full"
+        className="px-4 py-2 w-full"
         :placeholder="placeholder"
         v-model="internalQuery"
         @input="$emit('update:query', internalQuery)"
@@ -10,27 +10,31 @@
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    query: {
-      type: String,
-      required: true
-    },
-    placeholder: {
-      type: String,
-      default: 'Search for name or email...'
-    }
+<script setup>
+import {ref, watch, computed} from 'vue';
+
+const props = defineProps({
+  query: {
+    type: String,
+    required: true
   },
-  data() {
-    return {
-      internalQuery: this.query
-    };
-  },
-  watch: {
-    query(newVal) {
-      this.internalQuery = newVal;
-    }
+  placeholder: {
+    type: String,
+    default: 'Search for name or email...'
   }
-};
+});
+
+const internalQuery = ref(props.query);
+
+const emitQueryUpdate = computed({
+  get: () => internalQuery.value,
+  set: (val) => {
+    internalQuery.value = val;
+    emit('update:query', val);
+  }
+});
+
+watch(() => props.query, (newVal) => {
+  internalQuery.value = newVal;
+});
 </script>
