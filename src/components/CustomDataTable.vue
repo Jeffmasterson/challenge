@@ -38,128 +38,76 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
-import jsonData from '../data.json';
-import Paginate from "vuejs-paginate-next";
-import DropDown from "@/components/DropDown.vue";
-import DataTable from "@/components/DataTable.vue";
-import RegisterModal from "@/components/RegisterModal.vue";
+import { ref, computed, watch, onMounted } from 'vue'
+import jsonData from '../data.json'
+import Paginate from "vuejs-paginate-next"
+import DropDown from "@/components/DropDown.vue"
+import DataTable from "@/components/DataTable.vue"
+import RegisterModal from "@/components/RegisterModal.vue"
 import SearchBar from "@/components/SearchBar.vue";
-import PageDropDown from "@/components/PageDropDown.vue";
+import PageDropDown from "@/components/PageDropDown.vue"
 
-// Declare reactive data for the component
-const data = ref(jsonData);
-const searchQuery = ref("");
-const selectedCountry = ref(null);
-const selectedRegion = ref(null);
+const data = ref(jsonData)
+const searchQuery = ref("")
+const selectedCountry = ref(null)
+const selectedRegion = ref(null)
 const totalRecords = ref(0);
-const currentPage = ref(1);
-const itemsPerPage = ref(10);
-const newRecord = ref({ name: '', email: '', country: '', region: '' });
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+const newRecord = ref({ name: '', email: '', country: '', region: '' })
 
-// Computed property for filtering data based on search criteria
+
 const filteredData = computed(() => {
-  let filtered = data.value;
+  const query = searchQuery.value ? searchQuery.value.toLowerCase() : ''
+  return data.value
+      .filter(item => !selectedCountry.value || item.country === selectedCountry.value)
+      .filter(item => !selectedRegion.value || item.region === selectedRegion.value)
+      .filter(item => {
+        if (query) {
+          pageReset()
+          return item.name.toLowerCase().includes(query) || item.email.toLowerCase().includes(query)
+        }
+        return true
+      })
+})
 
-  // Filter by country
-  if (selectedCountry.value) {
-    filtered = filtered.filter(item => item.country === selectedCountry.value);
-  }
-
-  // Filter by region
-  if (selectedRegion.value) {
-    filtered = filtered.filter(item => item.region === selectedRegion.value);
-  }
-
-  // Filter by search query
-  if (searchQuery.value) {
-    currentPage.value = 1;
-    const query = searchQuery.value.toLowerCase();
-    filtered = filtered.filter(item =>
-        item.name.toLowerCase().includes(query) || item.email.toLowerCase().includes(query)
-    );
-  }
-
-  return filtered;
-});
-
-// Computed property to calculate paginated data
 const paginatedData = computed(() => {
-  let sortedAndFiltered = filteredData.value;
-  sortedAndFiltered.sort((a, b) => a.name.localeCompare(b.name));
-  const startIndex = (currentPage.value - 1) * itemsPerPage.value;
-  const endIndex = startIndex + itemsPerPage.value;
-  return sortedAndFiltered.slice(startIndex, endIndex);
-});
+  const startIndex = (currentPage.value - 1) * itemsPerPage.value
+  return filteredData.value
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(startIndex, startIndex + itemsPerPage.value)
+})
 
-// Computed property to calculate total pages
-const totalPages = computed(() => {
-  return Math.ceil(totalRecords.value / itemsPerPage.value);
-});
+const totalPages = computed(() => Math.ceil(totalRecords.value / itemsPerPage.value))
 
-// Computed properties for country and region names
-const countryName = computed(() => {
-  const uniqueCountry = new Set();
-  data.value.forEach(item => {
-    uniqueCountry.add(item.country);
-  });
-  return Array.from(uniqueCountry).sort();
-});
+const uniqueValues = (key) => [...new Set(data.value.map(item => item[key]))].sort()
 
-const regionName = computed(() => {
-  const uniqueRegion = new Set();
-  data.value.forEach(item => {
-    uniqueRegion.add(item.region);
-  });
-  return Array.from(uniqueRegion).sort();
-});
+const countryName = computed(() => uniqueValues('country'))
 
-// Watcher to update totalRecords when filteredData changes
+const regionName = computed(() => uniqueValues('region'))
+
 watch(filteredData, (newFilteredData) => {
-  totalRecords.value = newFilteredData.length;
-});
+  totalRecords.value = newFilteredData.length
+})
 
-// Function to add a new record
-function addRecord(record) {
-  data.value.push({ ...record, id: Date.now() });
-  totalRecords.value = data.value.length;
-  newRecord.value = { name: '', email: '', country: '', region: '' };
+const addRecord = record => {
+  data.value.push({ ...record, id: Date.now() })
+  totalRecords.value = data.value.length
+  newRecord.value = { name: '', email: '', country: '', region: '' }
 }
 
-// Function to handle page changes
-function handlePageChange(pageNumber) {
-  currentPage.value = pageNumber;
-}
+const handlePageChange = pageNumber => currentPage.value = pageNumber
 
-// Function to update selected region
-function UpdateSelectedRegion(region) {
-  selectedRegion.value = region;
-  currentPage.value = 1;
-}
+const UpdateSelectedRegion = region => (selectedRegion.value = region, pageReset())
 
-// Function to update selected country
-function updateSelectedHome(country) {
-  selectedCountry.value = country;
-  currentPage.value = 1;
-}
+const updateSelectedHome = country => (selectedCountry.value = country, pageReset())
 
-// Function to update search query
-function onSearchQueryUpdate(newQuery) {
-  searchQuery.value = newQuery;
-  currentPage.value = 1;
-}
+const onSearchQueryUpdate = newQuery => (searchQuery.value = newQuery, pageReset())
 
-// Function to clear search criteria
-function clearSearch() {
-  selectedRegion.value = '';
-  selectedCountry.value = '';
-  searchQuery.value = '';
-}
+const clearSearch = () => {selectedRegion.value = selectedCountry.value = searchQuery.value = ''}
 
-// Lifecycle hook to set initial total records count
-onMounted(() => {
-  totalRecords.value = data.value.length;
-});
+const pageReset = () => currentPage.value = 1
+
+onMounted(() => {totalRecords.value = data.value.length})
+
 </script>
-
-
